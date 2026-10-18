@@ -4,7 +4,6 @@ let sequence = 0
 
 function createId() {
   if (globalThis.crypto?.randomUUID) return 'CC-DEMO-' + globalThis.crypto.randomUUID()
-  // Timestamp, counter, and random entropy also distinguish IDs in older browsers.
   sequence += 1
   return 'CC-DEMO-' + Date.now().toString(36) + '-' + sequence.toString(36) +
     '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
