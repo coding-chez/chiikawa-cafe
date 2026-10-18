@@ -1,30 +1,34 @@
-import { Link } from 'react-router'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router'
 import { siteContent } from '../../data/siteContent.js'
+import Navbar from './Navbar.jsx'
+import Footer from './Footer.jsx'
 
 export default function SiteLayout({ children }) {
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.hash) {
+      // Runs after the destination page mounts, including navigation from placeholders.
+      const target = document.getElementById(location.hash.slice(1))
+      target?.scrollIntoView()
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [location.pathname, location.hash, location.key])
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-6">
-      <a href="#main-content" className="sr-only focus:not-sr-only">
+    <div className="flex min-h-screen flex-col">
+      <a href="#main-content"
+        className="sr-only fixed left-5 top-3 z-50 rounded-xl bg-white p-3 font-bold focus:not-sr-only">
         {siteContent.skipLink}
       </a>
-      <header className="border-b border-beige py-6">
-        <Link to="/" className="text-2xl font-extrabold">{siteContent.name}</Link>
-        <nav aria-label={siteContent.navigationLabel} className="mt-4">
-          <ul className="flex flex-wrap gap-x-6 gap-y-2">
-            {siteContent.navigation.map(({ to, label }) => (
-              <li key={to}>
-                <Link to={to} className="underline hover:decoration-pink">{label}</Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
-      <main id="main-content" tabIndex={-1} className="flex-1 py-10">
+      <Navbar key={location.key} />
+      <main id="main-content" tabIndex={-1}
+        className={'flex-1 ' + (location.pathname === '/' ? 'bg-beige' : 'content-width w-full py-10')}>
         {children}
       </main>
-      <footer className="border-t border-beige py-6 text-sm text-muted">
-        {siteContent.disclaimer}
-      </footer>
+      <Footer />
     </div>
   )
 }

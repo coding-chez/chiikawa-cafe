@@ -16,7 +16,7 @@
 @layer base {
   body {
     margin: 0;
-    min-width: 320px;
+    min-width: 0;
     background: var(--color-cream);
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -30,5 +30,54 @@
   a:focus-visible {
     outline: 2px solid var(--color-ink);
     outline-offset: 4px;
+  }
+}
+
+@layer base {
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+
+  :where(a, button):focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 4px;
+  }
+
+  :where(section[id], main[id]) {
+    scroll-margin-top: 24px;
+  }
+}
+
+@utility content-width {
+  width: calc(100% - 40px);
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+@utility shadow-cafe {
+  box-shadow: 0 8px 16px rgb(30 27 26 / 8%);
+}
+
+@layer components {
+  .button-primary,
+  .button-secondary {
+    @apply inline-flex min-h-13 items-center justify-center rounded-full px-6 py-3 text-center text-sm font-extrabold;
+  }
+
+  .button-primary {
+    @apply bg-pink hover:bg-pink/75;
+  }
+
+  .button-secondary {
+    @apply border-2 border-ink bg-white hover:bg-cream;
+  }
+
+  .nav-link {
+    @apply flex min-h-12 items-center border-b-2 border-transparent text-sm font-extrabold hover:border-ink;
+  }
+
+  .nav-link-active {
+    @apply border-ink;
   }
 }

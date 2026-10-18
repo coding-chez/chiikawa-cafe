@@ -2,7 +2,7 @@ export const siteContent = {
   name: 'Chiikawa Café',
   navigationLabel: 'Main navigation',
   skipLink: 'Skip to content',
- // disclaimer: 'Unofficial student demo. Not affiliated with or endorsed by Chiikawa or its rights holders.',
+  disclaimer: 'Not affiliated with or endorsed by Chiikawa or its rights holders.',
   navigation: [
     { to: '/', label: 'Home' },
     { to: '/menu', label: 'Menu' },
