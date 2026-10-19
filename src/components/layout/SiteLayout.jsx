@@ -14,9 +14,16 @@ export default function SiteLayout({ children }) {
     if (location.hash) {
       // Runs after the destination page mounts, including navigation from placeholders.
       const target = document.getElementById(location.hash.slice(1))
-      target?.scrollIntoView()
+      if (target) {
+        target.scrollIntoView()
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+        target.focus({ preventScroll: true })
+      }
     } else if (previousPathname.current !== location.pathname) {
       window.scrollTo(0, 0)
+      if (previousPathname.current !== null) {
+        document.getElementById('main-content')?.focus({ preventScroll: true })
+      }
     }
     previousPathname.current = location.pathname
   }, [location.pathname, location.hash, location.key])

@@ -74,7 +74,7 @@
   }
 
   .nav-link {
-    @apply flex min-h-12 items-center border-b-2 border-transparent text-sm font-extrabold hover:border-ink;
+    @apply flex min-h-12 min-w-11 items-center justify-center border-b-2 border-transparent text-sm font-extrabold hover:border-ink;
   }
 
   .nav-link-active {
@@ -114,5 +114,19 @@
   .quantity-input::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+}
+
+@layer base {
+  :where(main, section[tabindex="-1"]):focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 4px;
+  }
+}
+
+@layer components {
+  .catalog-input::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
   }
 }

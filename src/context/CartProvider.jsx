@@ -44,9 +44,11 @@ export default function CartProvider({ children }) {
         return { ...previous, feedback: checkoutContent.locked, feedbackId: previous.feedbackId + 1 }
       }
       try {
+        const next = changeCart(previous.cart, change)
         return {
-          ...previous, cart: changeCart(previous.cart, change),
-          feedback, feedbackId: previous.feedbackId + 1,
+          ...previous, cart: next,
+          feedback: feedback + ' ' + cartContent.countStatus(next.getItemCount()),
+          feedbackId: previous.feedbackId + 1,
         }
       } catch {
         return {

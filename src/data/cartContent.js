@@ -3,6 +3,7 @@ export const cartContent = {
   subtitle: 'Almost time for something yummy!',
   addLabel: (name) => 'Add ' + name + ' to cart',
   added: (name, quantity) => 'Added ' + quantity + ' × ' + name + ' to your cart.',
+  countStatus: (count) => 'Cart now has ' + count + (count === 1 ? ' item.' : ' items.'),
   updated: 'Cart quantity updated.',
   removed: 'Item removed from your cart.',
   cleared: 'Your cart is now empty.',
