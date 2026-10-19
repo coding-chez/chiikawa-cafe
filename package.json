@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test src/tests/*.test.js"
+    "test": "node --test src/tests/*.test.js",
+    "test:browser": "node src/tests/cart.browser.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

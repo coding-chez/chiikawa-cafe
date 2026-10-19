@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router'
+import useCart from '../../hooks/useCart.js'
+import { cartContent } from '../../data/cartContent.js'
 import { siteContent } from '../../data/siteContent.js'
 import { homeContent } from '../../data/homeContent.js'
 
 function CartLink() {
+  const { itemCount } = useCart()
   const cart = homeContent.navigation.find(({ to }) => to === '/cart')
   return (
-    <NavLink to={cart.to} aria-label={homeContent.accessibility.cart}
+    <NavLink to={cart.to} aria-label={cartContent.badgeLabel(itemCount)}
       className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink bg-pink px-3 font-extrabold hover:bg-pink/75 md:px-6">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
         className="size-5 md:hidden" aria-hidden="true">
         <path d="M3 4h3l3 12h10l2-9H7M10 20h.01M18 20h.01" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <span className="hidden md:inline">{cart.label}</span>
-      <span className="flex size-5 items-center justify-center rounded-full bg-white text-xs" aria-hidden="true">0</span>
+      <span data-cart-badge className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs" aria-hidden="true">{itemCount}</span>
     </NavLink>
   )
 }

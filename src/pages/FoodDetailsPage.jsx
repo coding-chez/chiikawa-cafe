@@ -5,10 +5,13 @@ import { products } from '../data/products.js'
 import { categories } from '../data/categories.js'
 import { productImages } from '../data/homeAssets.js'
 import { getProductById } from '../utils/catalog.js'
+import useCart from '../hooks/useCart.js'
+import { cartContent } from '../data/cartContent.js'
 import { formatCurrency } from '../utils/currency.js'
 
 function ProductDetails({ product }) {
   const [quantity, setQuantity] = useState(1)
+  const { addToCart } = useCart()
   const content = catalogContent.details
   const category = categories.find((category) => category.matches(product))
   const image = product.image || productImages[product.id]
@@ -69,11 +72,11 @@ function ProductDetails({ product }) {
                 onClick={() => changeQuantity(quantity + 1)} className="quantity-button">+</button>
             </div>
           </div>
-          <button type="button" disabled aria-describedby="cart-unavailable-note"
-            className="mt-5 flex min-h-13 w-full cursor-not-allowed items-center justify-center rounded-full bg-pink px-5 py-3 text-center font-extrabold">
+          <button type="button" disabled={!product.available} onClick={() => addToCart(product, quantity)} aria-describedby="detail-cart-note"
+            className="mt-5 flex min-h-13 w-full items-center justify-center rounded-full bg-pink px-5 py-3 text-center font-extrabold hover:bg-pink/75 disabled:opacity-50">
             {content.addToCart} · <span className="ml-1" aria-live="polite">{formatCurrency(total)}</span>
           </button>
-          <p id="cart-unavailable-note" className="mt-2 text-sm text-muted">{content.cartComingSoon}</p>
+          <p id="detail-cart-note" className="mt-2 text-sm text-muted">{cartContent.detailsNote}</p>
           <Link to="/menu" className="mt-2 inline-flex min-h-12 items-center font-bold hover:underline">{content.back}</Link>
           <p className="mt-3 text-xs text-muted md:text-sm">{content.demo}</p>
         </div>
