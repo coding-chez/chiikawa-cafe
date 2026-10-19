@@ -125,7 +125,7 @@ try {
   assert.equal(await evaluate('document.querySelectorAll("article[data-product-id]").length'), 2)
   assert.match(await cartTotal(), /410/)
   assert.equal(await evaluate('document.querySelector("[data-cart-item-count]").textContent'), '3')
-  assert.equal(await run(() => document.querySelector('button[aria-describedby="checkout-note"]').disabled), true)
+  assert.equal(await run(() => document.querySelector('button[aria-describedby="checkout-note"]').disabled), false)
   assert.equal(await run((key) => localStorage.getItem(key), orderKey), 'confirmed-order-sentinel')
   assert.deepEqual(await run((key) => JSON.parse(localStorage.getItem(key)), key), [
     { productId: 'FOOD-001', quantity: 2 }, { productId: 'FOOD-007', quantity: 1 },
@@ -232,12 +232,159 @@ try {
   await expectBadge(1)
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: deniedStorage.identifier })
   await navigate('/order-success')
-  assert.match(await evaluate('document.querySelector("main").textContent'), /preview/i)
+  assert.equal(await evaluate('document.querySelector("main h1").textContent'), 'No demo order found')
   assert.equal(await run((key) => localStorage.getItem(key), orderKey), 'confirmed-order-sentinel')
-  assert.deepEqual(errors, [])
-  checks.push('Denied storage does not crash the app; Order Success remains a placeholder')
 
-  console.log(JSON.stringify({ checks, layouts, runtimeErrors: errors }, null, 2))
+  const journalKey = 'chiikawa-cafe-checkout-v1'
+  await run((...keys) => keys.forEach(key => localStorage.removeItem(key)), key, orderKey, journalKey)
+  const orderWrites = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: 'window.__orderWrites = []; const recordOrderWrite = Storage.prototype.setItem; Storage.prototype.setItem = function(key, value) { if (key === "chiikawa-cafe.latest-order") window.__orderWrites.push(value); return recordOrderWrite.call(this, key, value) }',
+  })
+  await navigate('/menu')
+  await addCard('Strawberry Cloud Cake')
+  await addCard('Strawberry Cloud Cake')
+  await addCard('Peach Milk Float')
+  await run(() => document.querySelector('header a[href="/cart"]').click())
+  await pause(100)
+  assert.match(await cartTotal(), /410/)
+  await run(() => {
+    const button = document.querySelector('button[aria-describedby="checkout-note"]')
+    button.click()
+    button.click()
+  })
+  await until('location.pathname === "/order-success" && !!document.querySelector("[data-order-reference]")')
+  await expectBadge(0)
+  const originalReference = await evaluate('document.querySelector("[data-order-reference]").textContent')
+  assert.match(originalReference, /^CC-DEMO-/)
+  assert.match(await evaluate('document.querySelector("[data-order-total]").textContent'), /410/)
+  assert.match(await evaluate('document.querySelector("[data-order-item-count]").textContent'), /3/)
+  assert.equal(await evaluate('window.__orderWrites.length'), 1)
+  assert.equal(await run((key) => localStorage.getItem(key), journalKey), null)
+  assert.deepEqual(await run((key) => JSON.parse(localStorage.getItem(key)), key), [])
+  const originalItems = await run((key) => JSON.parse(localStorage.getItem(key)).items, orderKey)
+  checks.push('Full PHP 410 checkout saves one order under duplicate clicks and zeros the badge')
+
+  await navigate('/order-success')
+  assert.equal(await evaluate('document.querySelector("[data-order-reference]").textContent'), originalReference)
+  assert.deepEqual(await run((key) => JSON.parse(localStorage.getItem(key)).items, orderKey), originalItems)
+  assert.match(await evaluate('document.querySelector("[data-order-total]").textContent'), /410/)
+  const confirmationLayouts = []
+  for (const width of [1440, 390, 375, 320]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false })
+    await navigate('/order-success')
+    const layout = await run(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      imagesLoaded: [...document.images].every(img => img.naturalWidth > 0),
+      reference: document.querySelector('[data-order-reference]').textContent,
+    }))
+    assert.ok(layout.scrollWidth <= layout.clientWidth, 'Confirmation has no overflow at ' + width)
+    assert.equal(layout.imagesLoaded, true)
+    assert.equal(layout.reference, originalReference)
+    const size = (await send('Page.getLayoutMetrics')).cssContentSize
+    const shot = await send('Page.captureScreenshot', {
+      format: 'png', captureBeyondViewport: true,
+      clip: { x: 0, y: 0, width, height: size.height, scale: 1 },
+    })
+    const imagePath = join(folder, 'success-' + width + '.png')
+    await writeFile(imagePath, Buffer.from(shot.data, 'base64'))
+    confirmationLayouts.push({ width, ...layout, imagePath })
+  }
+  checks.push('Confirmation refresh retains ID/items/total with no overflow at four widths')
+  await clickText('main a', 'Back to Menu')
+  await addCard('Cozy Omurice')
+  await expectBadge(1)
+  assert.equal(await run((key) => JSON.parse(localStorage.getItem(key)).id, orderKey), originalReference)
+  await run(() => document.querySelector('header a[href="/cart"]').click())
+  await pause(100)
+  assert.match(await cartTotal(), /185/)
+  await clickText('main button', 'Clear cart')
+  await expectBadge(0)
+  checks.push('Post-checkout cart starts empty and accepts a new product without changing its receipt')
+
+  const exampleEntries = [{ productId: 'FOOD-001', quantity: 2 }, { productId: 'FOOD-007', quantity: 1 }]
+  await run((key, entries) => localStorage.setItem(key, JSON.stringify(entries)), key, exampleEntries)
+  const orderFailure = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: 'const failOrderWrite = Storage.prototype.setItem; Storage.prototype.setItem = function(key, value) { if (key === "chiikawa-cafe.latest-order") throw new DOMException("Order write denied", "QuotaExceededError"); return failOrderWrite.call(this, key, value) }',
+  })
+  await navigate('/cart')
+  await run(() => document.querySelector('button[aria-describedby="checkout-note"]').click())
+  await until('!!document.querySelector("[data-checkout-error]")')
+  assert.equal(await evaluate('location.pathname'), '/cart')
+  await expectBadge(3)
+  assert.match(await cartTotal(), /410/)
+  assert.equal(await run((key) => JSON.parse(localStorage.getItem(key)).id, orderKey), originalReference)
+  const pendingAfterOrderFailure = await run((key) => JSON.parse(localStorage.getItem(key)).id, journalKey)
+  assert.equal(await run(() => document.querySelector('article button[aria-label^="Remove"]').disabled), true)
+  await navigate('/cart')
+  assert.equal(await run((key) => JSON.parse(localStorage.getItem(key)).id, journalKey), pendingAfterOrderFailure)
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: orderFailure.identifier })
+  await navigate('/cart')
+  await clickText('main button', 'Finish Demo Order')
+  await until('location.pathname === "/order-success" && !!document.querySelector("[data-order-reference]")')
+  assert.equal(await evaluate('document.querySelector("[data-order-reference]").textContent'), pendingAfterOrderFailure)
+  await expectBadge(0)
+  checks.push('Order-save failure stays on Cart, preserves selections and previous receipt, and retries the same ID')
+
+  await run((key, entries) => localStorage.setItem(key, JSON.stringify(entries)), key, exampleEntries)
+  const clearFailure = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: 'const failClearWrite = Storage.prototype.setItem; Storage.prototype.setItem = function(key, value) { if (key === "chiikawa-cafe-cart-v1" && value === "[]") throw new DOMException("Cart clear denied", "QuotaExceededError"); return failClearWrite.call(this, key, value) }',
+  })
+  await navigate('/cart')
+  await run(() => document.querySelector('button[aria-describedby="checkout-note"]').click())
+  await until('!!document.querySelector("[data-checkout-error]")')
+  await expectBadge(3)
+  const pendingAfterClearFailure = await run((key) => JSON.parse(localStorage.getItem(key)).id, journalKey)
+  assert.equal(await run((key) => JSON.parse(localStorage.getItem(key)).id, orderKey), pendingAfterClearFailure)
+  await navigate('/order-success')
+  assert.match(await evaluate('document.querySelector("h1").textContent'), /one more step/)
+  assert.equal(await evaluate('!!document.querySelector("[data-order-reference]")'), false)
+  await navigate('/cart')
+  await expectBadge(3)
+  assert.deepEqual(await run((key) => JSON.parse(localStorage.getItem(key)), key), exampleEntries)
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: clearFailure.identifier })
+  await navigate('/cart')
+  await clickText('main button', 'Finish Demo Order')
+  await until('location.pathname === "/order-success" && !!document.querySelector("[data-order-reference]")')
+  assert.equal(await evaluate('document.querySelector("[data-order-reference]").textContent'), pendingAfterClearFailure)
+  await expectBadge(0)
+  checks.push('Cart-clear failure never shows premature success and refresh/retry keeps the saved order ID')
+
+  await run((key, entries) => localStorage.setItem(key, JSON.stringify(entries)), key, exampleEntries)
+  const cleanupFailure = await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: 'const failCleanup = Storage.prototype.removeItem; Storage.prototype.removeItem = function(key) { if (key === "chiikawa-cafe-checkout-v1") throw new DOMException("Cleanup denied", "SecurityError"); return failCleanup.call(this, key) }',
+  })
+  await navigate('/cart')
+  await run(() => document.querySelector('button[aria-describedby="checkout-note"]').click())
+  await until('!!document.querySelector("[data-checkout-error]")')
+  const pendingAfterCleanupFailure = await run((key) => JSON.parse(localStorage.getItem(key)).id, journalKey)
+  assert.deepEqual(await run((key) => JSON.parse(localStorage.getItem(key)), key), [])
+  await navigate('/cart')
+  await expectBadge(3)
+  assert.match(await cartTotal(), /410/)
+  assert.deepEqual(await run((key) => JSON.parse(localStorage.getItem(key)), key), [], 'Recovery must not rewrite pending items into the cleared cart')
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: cleanupFailure.identifier })
+  await navigate('/cart')
+  await clickText('main button', 'Finish Demo Order')
+  await until('location.pathname === "/order-success" && !!document.querySelector("[data-order-reference]")')
+  assert.equal(await evaluate('document.querySelector("[data-order-reference]").textContent'), pendingAfterCleanupFailure)
+  checks.push('Cleanup failure reconstructs a locked recovery cart without overwriting the already-empty saved cart')
+
+  await run((key) => localStorage.removeItem(key), orderKey)
+  await navigate('/order-success')
+  assert.equal(await evaluate('document.querySelector("h1").textContent'), 'No demo order found')
+  await run((key) => localStorage.setItem(key, '{'), orderKey)
+  await navigate('/order-success')
+  assert.equal(await evaluate('document.querySelector("h1").textContent'), 'No demo order found')
+  await navigate('/cart')
+  assert.equal(await evaluate('!!document.getElementById("empty-cart-heading")'), true)
+  checks.push('Missing/malformed receipts and empty carts have friendly fallbacks')
+  await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: orderWrites.identifier })
+
+  assert.deepEqual(errors, [])
+  checks.push('Denied storage does not crash the app; missing receipts fall back safely')
+
+  console.log(JSON.stringify({ checks, layouts, confirmationLayouts, runtimeErrors: errors }, null, 2))
   await send('Browser.close')
 } finally {
   ws?.close()

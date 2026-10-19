@@ -7,7 +7,8 @@ import { formatCurrency } from '../../utils/currency.js'
 import useCart from '../../hooks/useCart.js'
 
 export default function CartItemCard({ item }) {
-  const { updateQuantity, removeFromCart } = useCart()
+  const { updateQuantity, removeFromCart, isCheckingOut, checkoutPending } = useCart()
+  const locked = isCheckingOut || checkoutPending
   const { product, quantity } = item
   const category = categories.find((category) => category.matches(product))
   const image = product.image || productImages[product.id]
@@ -29,15 +30,15 @@ export default function CartItemCard({ item }) {
       </div>
       <div className="col-span-2 flex flex-wrap items-center justify-between gap-3 xl:contents">
         <div role="group" aria-label={cartContent.quantity(product.name)} className="flex w-fit items-center rounded-full border border-ink">
-          <button type="button" aria-label={cartContent.decrease(product.name)} disabled={quantity === 1}
+          <button type="button" aria-label={cartContent.decrease(product.name)} disabled={quantity === 1 || locked}
             onClick={() => updateQuantity(product.id, quantity - 1)} className="quantity-button">−</button>
           <output className="min-w-8 px-1 text-center font-extrabold">{quantity}</output>
-          <button type="button" aria-label={cartContent.increase(product.name)} disabled={quantity === Number.MAX_SAFE_INTEGER}
+          <button type="button" aria-label={cartContent.increase(product.name)} disabled={quantity === Number.MAX_SAFE_INTEGER || locked}
             onClick={() => updateQuantity(product.id, quantity + 1)} className="quantity-button">+</button>
         </div>
         <div className="text-right">
           <p className="text-lg font-extrabold" data-line-total>{formatCurrency(item.getLineTotal())}</p>
-          <button type="button" aria-label={cartContent.removeLabel(product.name)} onClick={() => removeFromCart(product.id)}
+          <button type="button" disabled={locked} aria-label={cartContent.removeLabel(product.name)} onClick={() => removeFromCart(product.id)}
             className="min-h-11 text-sm text-muted hover:underline">{cartContent.remove}</button>
         </div>
       </div>

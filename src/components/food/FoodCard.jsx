@@ -6,7 +6,7 @@ import { formatCurrency } from '../../utils/currency.js'
 import useCart from '../../hooks/useCart.js'
 
 export default function FoodCard({ product, category }) {
-  const { addToCart } = useCart()
+  const { addToCart, isCheckingOut, checkoutPending } = useCart()
   const image = product.image || productImages[product.id]
   return (
     <article className="flex h-full min-w-0 flex-col rounded-[24px] bg-white p-4 shadow-cafe transition-shadow hover:shadow-lg">
@@ -28,7 +28,7 @@ export default function FoodCard({ product, category }) {
       </Link>
       <div className="mt-auto flex items-center justify-between gap-3 pt-4 pb-1">
         <p className="text-lg font-extrabold">{formatCurrency(product.price)}</p>
-        <button type="button" disabled={!product.available} aria-label={cartContent.addLabel(product.name)}
+        <button type="button" disabled={!product.available || isCheckingOut || checkoutPending} aria-label={cartContent.addLabel(product.name)}
           onClick={() => addToCart(product)}
           className="flex size-11 shrink-0 items-center justify-center rounded-full border border-ink bg-pink text-xl hover:bg-pink/75 disabled:opacity-50">
           <span aria-hidden="true">+</span>

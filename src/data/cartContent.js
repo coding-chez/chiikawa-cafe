@@ -24,7 +24,7 @@ export const cartContent = {
   checkoutLater: 'Demo checkout will be enabled in a later milestone.',
   continueShopping: '← Continue Shopping',
   demo: 'Unofficial student demo. No real purchases or payments are processed.',
-  detailsNote: 'Review your selections in the cart. Demo checkout is not available yet.',
+  detailsNote: 'Review your selections in the cart before placing a demo order.',
   emptyTitle: 'A little room for something yummy',
   emptyDescription: 'Your cart is empty. Find a favorite treat to keep you company.',
   emptyImageAlt: 'Chiikawa welcoming you to browse the menu',

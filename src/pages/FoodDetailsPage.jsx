@@ -11,7 +11,7 @@ import { formatCurrency } from '../utils/currency.js'
 
 function ProductDetails({ product }) {
   const [quantity, setQuantity] = useState(1)
-  const { addToCart } = useCart()
+  const { addToCart, isCheckingOut, checkoutPending } = useCart()
   const content = catalogContent.details
   const category = categories.find((category) => category.matches(product))
   const image = product.image || productImages[product.id]
@@ -72,7 +72,7 @@ function ProductDetails({ product }) {
                 onClick={() => changeQuantity(quantity + 1)} className="quantity-button">+</button>
             </div>
           </div>
-          <button type="button" disabled={!product.available} onClick={() => addToCart(product, quantity)} aria-describedby="detail-cart-note"
+          <button type="button" disabled={!product.available || isCheckingOut || checkoutPending} onClick={() => addToCart(product, quantity)} aria-describedby="detail-cart-note"
             className="mt-5 flex min-h-13 w-full items-center justify-center rounded-full bg-pink px-5 py-3 text-center font-extrabold hover:bg-pink/75 disabled:opacity-50">
             {content.addToCart} · <span className="ml-1" aria-live="polite">{formatCurrency(total)}</span>
           </button>

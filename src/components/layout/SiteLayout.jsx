@@ -34,7 +34,7 @@ export default function SiteLayout({ children }) {
         </p>
       )}
       <main id="main-content" tabIndex={-1}
-        className={'flex-1 ' + ((location.pathname === '/' || location.pathname === '/cart' || location.pathname === '/menu' || location.pathname.startsWith('/menu/')) ? 'bg-beige' : 'content-width w-full py-10')}>
+        className={'flex-1 ' + ((location.pathname === '/' || location.pathname === '/cart' || location.pathname === '/order-success' || location.pathname === '/menu' || location.pathname.startsWith('/menu/')) ? 'bg-beige' : 'content-width w-full py-10')}>
         {children}
       </main>
       <Footer />

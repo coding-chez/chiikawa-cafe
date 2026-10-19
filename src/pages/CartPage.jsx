@@ -1,12 +1,20 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import CartItemCard from '../components/cart/CartItemCard.jsx'
+import { checkoutContent } from '../data/checkoutContent.js'
 import { cartContent } from '../data/cartContent.js'
 import { characterImages } from '../data/homeAssets.js'
 import { formatCurrency } from '../utils/currency.js'
 import useCart from '../hooks/useCart.js'
 
 export default function CartPage() {
-  const { cart, itemCount, subtotal, clearCart } = useCart()
+  const { cart, itemCount, subtotal, clearCart, placeDemoOrder,
+    isCheckingOut, checkoutPending, checkoutError, pendingOrder } = useCart()
+  const navigate = useNavigate()
+
+  async function handleDemoOrder() {
+    const order = await placeDemoOrder()
+    if (order) navigate('/order-success')
+  }
 
   return (
     <div className="content-width py-7 md:py-12">
@@ -15,10 +23,16 @@ export default function CartPage() {
           <h1 className="text-[30px] leading-tight font-extrabold md:text-[44px]">{cartContent.title}</h1>
           <p className="mt-2 text-muted">{cartContent.subtitle}</p>
         </div>
-        {itemCount > 0 && <button type="button" onClick={clearCart}
+        {itemCount > 0 && <button type="button" disabled={isCheckingOut || checkoutPending} onClick={clearCart}
           className="min-h-11 text-sm font-bold underline">{cartContent.clear}</button>}
       </header>
 
+      {checkoutPending && (
+        <p role="status" className="mb-6 rounded-2xl border border-ink/20 bg-white p-4 text-sm text-muted">
+          {checkoutContent.recovery}
+          {pendingOrder && <span className="mt-2 block font-bold [overflow-wrap:anywhere]">{pendingOrder.id}</span>}
+        </p>
+      )}
       {cart.items.length === 0 ? (
         <section aria-labelledby="empty-cart-heading" className="rounded-[28px] bg-white px-6 py-10 text-center shadow-cafe md:py-14">
           <img src={characterImages.Chiikawa} alt={cartContent.emptyImageAlt} width="120" height="120"
@@ -43,9 +57,15 @@ export default function CartPage() {
                 <dd className="text-[32px] leading-tight font-extrabold" data-cart-total>{formatCurrency(subtotal)}</dd>
               </div>
             </dl>
-            <button type="button" disabled aria-describedby="checkout-note"
-              className="mt-7 min-h-13 w-full rounded-full bg-pink px-4 py-3 font-extrabold">{cartContent.placeOrder}</button>
-            <p id="checkout-note" className="mt-3 text-center text-xs text-muted">{cartContent.checkoutLater}</p>
+            <button type="button" disabled={itemCount === 0 || isCheckingOut} aria-busy={isCheckingOut}
+              aria-describedby="checkout-note" onClick={handleDemoOrder}
+              className="mt-7 min-h-13 w-full rounded-full bg-pink px-4 py-3 font-extrabold hover:bg-pink/75 disabled:opacity-60">
+              {isCheckingOut ? checkoutContent.placing : checkoutPending ? checkoutContent.retry : cartContent.placeOrder}
+            </button>
+            <p id="checkout-note" role="status" className="mt-3 text-center text-xs text-muted">
+              {isCheckingOut ? checkoutContent.placing : checkoutContent.ready}
+            </p>
+            {checkoutError && <p role="alert" data-checkout-error className="mt-4 rounded-xl border border-ink/20 bg-cream p-3 text-sm">{checkoutError}</p>}
             <Link to="/menu" className="mt-3 flex min-h-12 items-center justify-center text-center text-sm font-bold hover:underline">
               {cartContent.continueShopping}
             </Link>
