@@ -24,3 +24,8 @@ export function getFeaturedProducts(products) {
 export function getProductById(products, id) {
   return products.find((product) => product.id === id)
 }
+
+export function getCategoryFromSearchParams(searchParams, categories) {
+  const categoryId = searchParams.get('category')
+  return categories.some((category) => category.id === categoryId) ? categoryId : 'All'
+}

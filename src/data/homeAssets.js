@@ -9,14 +9,23 @@ export const characterImages = {
 
 export const productImages = {
   'FOOD-001': '/assets/food/strawberry-cloud-cake.png',
+  'FOOD-002': '/assets/food/honey-bunny-pancakes.png',
+  'FOOD-003': '/assets/food/chocolate-bear-brownie.png',
   'FOOD-004': '/assets/food/cozy-omurice.png',
+  'FOOD-005': '/assets/food/little-star-curry-rice.png',
+  'FOOD-006': '/assets/food/creamy-mushroom-pasta.png',
   'FOOD-007': '/assets/food/peach-milk-float.png',
-  'FOOD-010': '/assets/food/cookie.png',
+  'FOOD-008': '/assets/food/strawberry-milk.png',
+  'FOOD-009': '/assets/food/iced-matcha-latte.png',
+  'FOOD-010': '/assets/food/mini-cheese-toast.png',
+  'FOOD-011': '/assets/food/crispy-potato-stars.png',
+  'FOOD-012': '/assets/food/cinnamon-cookie-bites.png',
 }
 
 export const categoryImages = {
   DESSERTS: productImages['FOOD-001'],
   MEALS: productImages['FOOD-004'],
   DRINKS: productImages['FOOD-007'],
-  SNACKS: productImages['FOOD-010'],
+  // Preserve the approved Homepage decoration independently of product images.
+  SNACKS: '/assets/food/cookie.png',
 }

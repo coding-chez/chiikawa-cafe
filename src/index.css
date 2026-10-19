@@ -81,3 +81,38 @@
     @apply border-ink;
   }
 }
+
+@layer base {
+  :where(input, select):focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 4px;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  .catalog-input {
+    @apply min-h-13 w-full min-w-0 rounded-2xl border border-ink/70 bg-transparent text-sm;
+  }
+
+  .category-chip {
+    @apply min-h-11 rounded-full border border-ink/70 px-5 py-2 text-sm font-extrabold hover:shadow-sm;
+  }
+
+  .quantity-button {
+    @apply flex size-12 shrink-0 items-center justify-center rounded-full text-xl hover:bg-cream disabled:text-muted/40;
+  }
+
+  .quantity-input {
+    appearance: textfield;
+  }
+
+  .quantity-input::-webkit-inner-spin-button,
+  .quantity-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
